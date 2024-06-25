@@ -1,6 +1,7 @@
 package main
 
 import (
+    "crypto/tls"
     "database/sql"
     "flag"
     "html/template"
@@ -74,12 +75,21 @@ func main() {
         sessionManager: sessionManager,
     }
 
+    // Use customized TLS configuration to use elliptic curves
+    tlsConfig := &tls.Config{
+        CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+    }
+
     // Create a custom http server to use our error logger instead of the standard logger
     // And that also contains our servermux
     srv := &http.Server{
         Addr: *addr,
         ErrorLog: errorLog,
         Handler: app.routes(),
+        TLSConfig: tlsConfig,
+        IdleTimeout: time.Minute,
+        ReadTimeout: 5 * time.Second,
+        WriteTimeout: 10 * time.Second,
     }
 
     infoLog.Printf("Starting server on %s", *addr)
