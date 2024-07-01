@@ -17,7 +17,7 @@ func (app *application) routes() http.Handler {
     fileServer := http.FileServer(http.Dir("./ui/static"))
     router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
 
-    dynamicMiddleWare := alice.New(app.sessionManager.LoadAndSave)
+    dynamicMiddleWare := alice.New(app.sessionManager.LoadAndSave, noSurf)
 
     // Unprotected routes (doesn't require authentication)
     router.Handler(http.MethodGet, "/", dynamicMiddleWare.ThenFunc(app.home))

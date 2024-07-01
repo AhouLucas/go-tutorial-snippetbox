@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+    "github.com/justinas/nosurf"
 )
 
 // http.Handler is an interface that contains the http.ServeHTTP method
@@ -64,4 +66,18 @@ func (app *application) requireAuthentication(next http.Handler) http.Handler {
         w.Header().Add("Cache-Control", "no-store")
         next.ServeHTTP(w, r)
     })
+}
+
+
+// Middleware for CSRF token
+
+func noSurf(next http.Handler) http.Handler{
+    csrfHandler := nosurf.New(next)
+    csrfHandler.SetBaseCookie(http.Cookie{
+        HttpOnly: true,
+        Path: "/",
+        Secure: true,
+    })
+
+    return csrfHandler
 }
