@@ -46,6 +46,24 @@ func (m *UserModel) Insert(name, email, password string) error {
 	return nil
 }
 
+func (m *UserModel) Get(id int) (*User, error) {
+	stmt := "SELECT id, name, email, created FROM users WHERE id = ?"
+
+	row := m.DB.QueryRow(stmt, id)
+
+	u := &User{}
+	err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Created)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		}else {
+			return nil, err
+		}
+	}
+	
+	return u, nil
+}
+
 func (m *UserModel) Authenticate(email, password string) (int, error) {
 	var id int
 	var hashedPassword []byte
@@ -73,5 +91,42 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 }
 
 func (m *UserModel) Exists(id int) (bool, error) {
-	return false, nil
+	var exists bool
+
+	stmt := "SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)"
+
+	err := m.DB.QueryRow(stmt, id).Scan(&exists)
+
+	return exists, err
+}
+
+func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
+	var userHashedPassword []byte
+
+	stmt := "SELECT hashed_password FROM users WHERE id = ?"
+
+	err := m.DB.QueryRow(stmt, id).Scan(&userHashedPassword)
+	if err != nil {
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword(userHashedPassword, []byte(currentPassword))
+
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+            return ErrInvalidCredentials
+        } else {
+            return err
+        }
+	}
+
+	newHashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	stmt = "UPDATE users SET hashed_password = ? WHERE id = ?"
+
+	_, err = m.DB.Exec(stmt, string(newHashedPassword), id)
+	return err
 }

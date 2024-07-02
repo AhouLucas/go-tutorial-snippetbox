@@ -35,11 +35,11 @@ def init_db():
     conn = sqlite3.connect('./db/snippetbox.db')
     c = conn.cursor()
 
-    c.execute(drop_snippets_stmt)
-    c.execute(create_snippet_stmt)
+    # c.execute(drop_snippets_stmt)
+    # c.execute(create_snippet_stmt)
 
-    c.execute(drop_sessions_stmt)
-    c.execute(create_sessions_stmt)
+    # c.execute(drop_sessions_stmt)
+    # c.execute(create_sessions_stmt)
 
     c.execute(drop_users_stmt)
     c.execute(create_users_stmt)
